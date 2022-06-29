@@ -35,7 +35,7 @@ app.use('(/oauth)?/:command?', function(req,res) {
 		// NEW USER
 		if (!u && !req.query.state) {
 			// start authentication-process by creating a new OAuthUser
-			let user=new OAuthUser('https://'+req.get('host')+req.originalUrl.split("?").shift(),req.query.referrer); //req.protocol
+			let user=new OAuthUser('https://'+req.get('host')+req.originalUrl.split("?").shift(),req.header('Referrer')); //req.protocol //req.header('Referrer') //req.body.referrer
 			oauth_users.push(user);
 			res.cookie('OAuthID',user.id);
 			// 1. Create an anti-forgery state token
@@ -82,7 +82,7 @@ app.use('(/oauth)?/:command?', function(req,res) {
 		if (u) {
 			if (u.redirect_URI) {res.redirect(u.redirect_URI); u.redirect_URI=undefined;} else {
 				if (req.query.state) {res.redirect(u.oauth_URI)} else {
-					let welcome='<b>Hello.</b> Thank you for using <a href='+u.oauth_URI+'>OAuth-service</a>. <!--(Call this service with ?referrer=https://yourdomain to be forwarded automatically.)-->';
+					let welcome='<b>Hello.</b> Thank you for using <a href='+u.oauth_URI+'>OAuth-service</a>.';
 					if (u.email) {welcome='Hello <b>'+u.email+'</b>.'}
 					welcome+='<br><a href='+u.oauth_URI+''+u.id+'>'+u.id+'</a> | <a href='+u.oauth_URI+'goodbye>say goodbye</a>';
 					res.send(welcome);
