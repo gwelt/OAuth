@@ -35,7 +35,7 @@ app.use('(/oauth)?/:command?', function(req,res) {
 		// NEW USER
 		if (!u && !req.query.state) {
 			// start authentication-process by creating a new OAuthUser
-			let user=new OAuthUser('https://'+req.get('host')+req.originalUrl.split("?").shift(),req.header('Referrer')); //req.protocol //req.header('Referrer') //req.body.referrer
+			let user=new OAuthUser('https://'+req.get('host')+req.originalUrl.split("?").shift(),req.query.redirect); //req.protocol //req.header('Referrer') //req.query.redirect
 			oauth_users.push(user);
 			res.cookie('OAuthID',user.id);
 			// 1. Create an anti-forgery state token
@@ -75,14 +75,15 @@ app.use('(/oauth)?/:command?', function(req,res) {
 			}
 
 			// in case the user does not have the cookie, send id
-			if (!u) {if (user) {res.send(user.id);res.end()} else {res.sendStatus(404)}}
+			if (!u) {if (user) {res.send(user.id);res.end()} else {res.sendStatus(404).end()}}
 		}
 
 		// EXISTING USER
 		if (u) {
+			if (req.query.redirect) {u.redirect_URI=req.query.redirect}
 			if (u.redirect_URI) {res.redirect(u.redirect_URI); u.redirect_URI=undefined;} else {
 				if (req.query.state) {res.redirect(u.oauth_URI)} else {
-					let welcome='<b>Hello.</b> Thank you for using <a href='+u.oauth_URI+'>OAuth-service</a>.';
+					let welcome='<b>Hello.</b> Thank you for using <a href='+u.oauth_URI+'>OAuth-service</a>. <!--(Call this service with ?redirect=https://yourdomain to be forwarded automatically.)-->';
 					if (u.email) {welcome='Hello <b>'+u.email+'</b>.'}
 					welcome+='<br><a href='+u.oauth_URI+''+u.id+'>'+u.id+'</a> | <a href='+u.oauth_URI+'goodbye>say goodbye</a>';
 					res.send(welcome);
@@ -109,7 +110,7 @@ app.use('(/oauth)?/:command?', function(req,res) {
 					if (current_user.redirect_URI) {res.redirect(current_user.redirect_URI)} else {
 						res.send('Have a nice day. <a href='+current_user.oauth_URI+'>See you</a> soon.');
 					}
-				}
+				} else {res.sendStatus(404)}
 				res.end();			
 				break;
 
